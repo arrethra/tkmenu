@@ -11,7 +11,7 @@ Created with help of Hans Maree ( https://github.com/snah )
 import tkinter as tk
 import collections as col
 
-# TODO: make function/class askokcancelcheckbox
+# TODO:  make function/class askokcancelcheckbox
 
 
 
