@@ -11,9 +11,6 @@ Created with help of Hans Maree ( https://github.com/snah )
 import tkinter as tk
 import collections as col
 
-# TODO:  make function/class askokcancelcheckbox
-
-
 
 def isiterable(var):
     """Returns whether input is iterable or not."""
@@ -112,9 +109,10 @@ class Menu:
            of the Menu doc-string )
 
 """
-        menu = tk.Menu(master)
+        menu = tk.Menu(master)       
 
         self._handles_dict = col.OrderedDict()
+        self._handles_dict[''] = menu
         submenu = []
         submenu_name = []
         submenu_dict = {}
@@ -137,7 +135,11 @@ class Menu:
                             current_submenu.add_cascade( menu_item.submenu_dict ) 
                             
                         elif isiterable(menu_item) and not isinstance(menu_item,str):
-                            text = menu_item[0] 
+                            text = menu_item[0]
+                            if not isinstance(text,str):
+                                error_message = "In the list of a menu-item, first item must be a string that defines the label. However, type %s was found."\
+                                                %type(text)
+                                raise TypeError(error_message)
                             dict_with_keywords = self._get_keywords(menu_item)
                             
                             if self._identify_separator(text):
@@ -172,7 +174,7 @@ class Menu:
                 del self.submenu_dict["tearoff"]
             except:
                 pass
-        else:
+        else:            
             tk.Tk.config(master,menu = menu)
             
 
@@ -252,17 +254,17 @@ class Menu:
 
     def get_handle(self,*path):
         """
-        Get the handle of a submenu. The arguments *path are the full
-        sequence of labels (of type string) leading to that specific
-        submenu.
+        Get the handle of a (sub)menu. The arguments *path are the full
+        sequence of labels (of type string) of that specific submenu.
+        Absence of 'path' (i.e. no arguments) returns the main handle.
+        
         E.g., in the example given in docstring of class Menu,
         the handle of submenu 'cheese' would be obtained by
         menubar.get_handle("file","milkproducts","cheese")
         """
         
         if not path:
-            error_message = ""
-            raise ValueError(error_message)
+            return self._handles_dict[""]
         
         _handles_dict_keys = self._handles_dict.keys()
         sep = self._handle_separator
@@ -370,7 +372,9 @@ if __name__ == "__main__":
                 ]    
     
     A = Menu(master, filemenu, editmenu, clockmenu, one_choice_only)
-    
+
+    assert A.get_handle().entrycget(1, 'menu') == str(A.get_handle("file"))
+
     
 
 
