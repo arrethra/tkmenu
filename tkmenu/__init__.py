@@ -6,6 +6,7 @@ up and enables a much clearer overview of the structure of the
 
 Author: Arrethra ( https://github.com/arrethra )
 Created with help of Hans Maree ( https://github.com/snah )
+Under MIT license
 """
 
 import tkinter as tk
@@ -176,6 +177,8 @@ class Menu:
                 pass
         else:            
             tk.Tk.config(master,menu = menu)
+
+        return self
             
 
     def _initiate_submenu(self, menu, menu_item):
@@ -267,7 +270,7 @@ class Menu:
             return self._handles_dict[""]
         
         _handles_dict_keys = self._handles_dict.keys()
-        sep = self._handle_separator
+        sep = self._handle_separator   # rename, because that name is just too long to use properly in code ...
         
         for i,path_partial in enumerate(path):
             if not isinstance(path_partial,str):
@@ -278,15 +281,15 @@ class Menu:
             if not full_path in _handles_dict_keys: # Asses if built up path is correct so far.
                 # If error, find out which keywords would have been correct in that position
                 lesser_path = sep.join(full_path.split(sep)[:-1]) # path leading up to this current stage
-                print(lesser_path)
-                possible_keys = [a[len(lesser_path+sep):] for a in _handles_dict_keys if a.startswith(lesser_path+sep)] # must start with lesser_path, and also removes it
-                possible_keys = [a for a in possible_keys if len(a.split(sep))==1 and a != ""] # remove any paths after base path
+                if lesser_path:
+                    lesser_path = lesser_path + sep
+                possible_keys = [a[len(lesser_path):] for a in _handles_dict_keys if a.startswith(lesser_path)] # must start with lesser_path, and also removes it
+                possible_keys = [a for a in possible_keys if len(a.split(sep))==1] # remove any paths after base path
                 
                 if len(possible_keys):
                     error_message = "Argument #%s '%s' unrecognised. Correct argument at that place could have been '%s'."%(i+1,path_partial,"', '".join(possible_keys))
                 else:
                     error_message = "Argument #%s '%s' unrecognised. There is no such path possible with that Argument."%(i+1,path_partial)
-                
                 raise ValueError(error_message)
 
             
@@ -322,63 +325,67 @@ class SubMenu(Menu):
 
 
 if __name__ == "__main__":
-    ##### TEST
-    master = tk.Tk()
-    
-    import datetime
-    time_string = ""    
-    def update_clock():
-        global time_string
-        time_string = str(datetime.datetime.now().time()).split(".")[0]
-        try:
-            A.get_handle("get current time").entryconfig(0,label=time_string)
-        except: pass
-    update_clock()
+##    ##### EXAMPLE 2 #####
+##    master = tk.Tk()
+##
+##    import datetime
+##    time_string = ""
+##    def update_clock():
+##        global time_string
+##        time_string = str(datetime.datetime.now().time()).split(".")[0]
+##        try:
+##            A.get_handle("get current time").entryconfig(0,label=time_string)
+##        except: pass
+##    update_clock()
+##
+##    radiobutton_var = tk.StringVar()
+##    radiobutton_var.set("cat")
+##
+##    filemenu = [["file"]
+##                ,["save",lambda:print("save")]
+##                ,"---"
+##                ,SubMenu(["milkproducts"
+##                          ,["whey",  lambda:print("whey")]
+##                          ,SubMenu([["cheese",{"foreground":"red"}]
+##                                     ,["20%",lambda:print("cheese 20%")]
+##                                     ,["40%",lambda:print("cheese 40%")]
+##                                    ])
+##                           ,["yogurt",lambda:print("yogurt")]
+##                          ])
+##                ,SubMenu(["vegetables"
+##                          ,["lettuce",    lambda:print("lettuce")]
+##                          ,["cauliflower",lambda:print("cauliflower")]
+##                         ])
+##                ,["---"]
+##                ,["quit",master.destroy]
+##                ]
+##
+##    editmenu = [["edit",{"tearoff":1}]
+##                ,["copy",lambda:print("copy")]
+##                ]
+##
+##    clockmenu= [["get current time",{"postcommand":update_clock}]
+##                ,[time_string]
+##                ]
+##
+##    one_choice_only = \
+##               [["one choice only"]
+##                ,["cat",{"type":"radiobutton", "variable":radiobutton_var, "value":"cat"}]
+##                ,["dog",{"type":"radiobutton", "variable":radiobutton_var, "value":"dog"}]
+##                ]
+##
+##    A = Menu(master, filemenu, editmenu, clockmenu, one_choice_only)
+##    master.wm_title("Example 2")
+##
+##    master.mainloop()
 
-    radiobutton_var = tk.StringVar()
-    radiobutton_var.set("cat")
-
-    filemenu = [["file"]
-                ,["save",lambda:print("save")]
-                ,"---"
-                ,SubMenu(["milkproducts"
-                          ,["whey",  lambda:print("whey")]
-                          ,SubMenu([["cheese",{"foreground":"red"}]
-                                     ,["20%",lambda:print("cheese 20%")]
-                                     ,["40%",lambda:print("cheese 40%")]
-                                    ])
-                           ,["yogurt",lambda:print("yogurt")]                                                             
-                          ])
-                ,SubMenu(["vegetables"
-                          ,["lettuce",    lambda:print("lettuce")]
-                          ,["cauliflower",lambda:print("cauliflower")]
-                         ])
-                ,["---"]
-                ,["quit",master.destroy]
-                ]
-    
-    editmenu = [["edit",{"tearoff":1}]
-                ,["copy",lambda:print("copy")]
-                ]
-    
-    clockmenu= [["get current time",{"postcommand":update_clock}]
-                ,[time_string]
-                ]
-
-    one_choice_only = \
-               [["one choice only"]
-                ,["cat",{"type":"radiobutton", "variable":radiobutton_var, "value":"cat"}]
-                ,["dog",{"type":"radiobutton", "variable":radiobutton_var, "value":"dog"}]
-                ]    
-    
-    A = Menu(master, filemenu, editmenu, clockmenu, one_choice_only)
-
-    assert A.get_handle().entrycget(1, 'menu') == str(A.get_handle("file"))
-
-    
 
 
-    master.mainloop()
 
+    ####### TEST #######
+    from test.test_tkmenu import Test_tkmenu
+    import unittest
+
+    unittest.main()
 
     
