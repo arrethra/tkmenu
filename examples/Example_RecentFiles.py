@@ -1,3 +1,11 @@
+# need to import it from another folder; this block enables that
+import sys, os, inspect
+current_folder = os.path.realpath(os.path.abspath(os.path.split(inspect.getfile( inspect.currentframe() ))[0]))
+parent_folder = os.path.split(current_folder)[0]
+if parent_folder not in sys.path:
+    sys.path.insert(0, parent_folder)
+del sys, os, inspect, current_folder, parent_folder
+
 import tkinter as tk
 from tkmenu import Menu, SubMenu
 
@@ -13,9 +21,12 @@ RecentFiles = ["file 3",
 RecentFileNumber = 4
 # mundane functions with respect to handling Recent Files
 def OpenNewFile():
+    max_files = 8
     global RecentFileNumber
     global RecentFiles
     RecentFiles = ["file %s"%RecentFileNumber] + RecentFiles
+    if len(RecentFiles)>max_files:
+        RecentFiles = RecentFiles[0:max_files]
     print("You just 'opened' %s."%RecentFiles[0],
           "You can now see that this file has been ",
           "\nadded to the submenu 'recent files' under 'file'.\n")

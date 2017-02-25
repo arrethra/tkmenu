@@ -28,10 +28,8 @@ class Menu:
     Creates a menu in tkinter, while enabling the user to have a clear
     overview of the structure of the (intended) menu. Submenus can be
     created through the class SubMenu from this module. See the example
-    below on its application.
-
-    # TODO (verwerk dit):
-    Re-initializing this class again, will overwrite existing menu.
+    below on its application. Re-initializing this class again, will
+    overwrite the existing menu.
 
     Arguments:
     -Menu_lists are lists, in which the first item is a string for
@@ -254,6 +252,7 @@ class Menu:
                 raise ValueError(error_message)
         return dict_with_keywords
 
+
     def _update_handles_dict_from_SubMenu(self, current_submenu_name, Submenu):
         """
         When a submenu has been created, the handles have to passed to
@@ -268,7 +267,7 @@ class Menu:
                 new_key = current_submenu_name  + old_key
             self._handles_dict[new_key] = Submenu._handles_dict[old_key]
 
-            # TODO: instead of using a single string with separators, store them in a tuple..... (why didn't I think of that before >,<  )
+
 
     def get_handle(self,*path):
         """
@@ -316,6 +315,8 @@ class Menu:
             
         return self._handles_dict[full_path]
 
+    # TODO: several methods need path, but how the argument is inserted, is not always consistent. please correct this... :)
+
 
     # TODO write test for this one
     def reconfigure_submenu(self, menu_list, path=None):
@@ -334,8 +335,10 @@ class Menu:
         'recent files', which can change in size.
         """
         
-        if isinstance(menu_list,SubMenu):            
+        if isinstance(menu_list,SubMenu):
+            submenu_class = menu_list
             menu_list = menu_list._menu_lists[0]
+            
         else:
             submenu_class = SubMenu(menu_list)
         if isinstance(path,str):
@@ -360,16 +363,17 @@ class Menu:
                 master_path = x
                 break
         else:
-            raise Exception # why didn't I find master_path ??? TODO
+            error_message = "# why didn't I find master_path ??? TODO not all handles were reset to the correct handle"
+            raise PathError(error_message)
         # delete any handles that are no longer usefull
-        handles_to_be_replaced = []
+        
         for x in self._handles_dict.copy().keys():
             if x[0:len(master_path)] == master_path and len(x) > len(master_path):
                 if x not in submenu_class._handles_dict.keys():
-                    handles_to_be_replaced.append(x)
-                    
+                    del self._handles_dict[x]
+        self._handles_dict[master_path+(label,)] = submenu
         self._update_handles_dict_from_SubMenu( master_path, submenu_class)
-        
+
         # self._order_handles_dict() #might slow down computations, while not yet realy necesary
 
 
@@ -407,12 +411,12 @@ class Menu:
             path_so_far += (x,)
         return output
 
-    # TODO: write test
+    
     def _order_handles_dict(self):
         self._handles_dict = col.OrderedDict(sorted(self._handles_dict.items(), key = lambda x: self._index_path(x[0]) ))
 
         
-    # TODO write test
+    # TODO write test ??
     def _find_master_and_label(self, menu_list, path=None):
         
         # tests whether menu_list is valid, and retrieves label of that submenu        

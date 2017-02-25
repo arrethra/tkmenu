@@ -13,11 +13,11 @@ except:
     import sys
     current_folder = os.path.realpath(os.path.abspath(os.path.split(inspect.getfile( inspect.currentframe() ))[0]))
     parent_folder = os.path.split(current_folder)[0]
-    grandpa_folder = os.path.split(parent_folder)[0]
-    if grandpa_folder not in sys.path:
-        sys.path.insert(0, grandpa_folder)
+    grandparent_folder = os.path.split(parent_folder)[0]
+    if grandparent_folder not in sys.path:
+        sys.path.insert(0, grandparent_folder)
     del sys
-    del current_folder, parent_folder, grandpa_folder
+    del current_folder, parent_folder, grandparent_folder
     from tkmenu import Menu, SubMenu
 
 # TODO: now you're testing with static examples, but use an example with an automatic iterator... ?
@@ -167,8 +167,75 @@ def assert_submenu2(self):
     assert_submenu1(self)      
     self.assertTrue(str(self.menubar.get_handle("file","milkproducts").entrycget(1,'foreground')) == "red")
     
+
+class RecentFilesClass():
+    """Simply used to stow some attributes.... """
+    pass
+
+Z = RecentFilesClass()  
+def initialize_menu_RecentFiles(self):
+    # from examples (RecentFiles)
+    
+    
+    Z.RecentFiles = ["file 3",
+                   "file2",
+                   "file 1"
+                   ]
+
+    Z.RecentFileNumber = 4
+    # mundane functions with respect to handling Recent Files
+    def OpenNewFile():
+        max_files = 8
+        Z.RecentFiles = ["file %s"%Z.RecentFileNumber] + Z.RecentFiles
+        if len(Z.RecentFiles)>max_files:
+            Z.RecentFiles = Z.RecentFiles[0:max_files]
+        ## print("You just 'opened' %s."%RecentFiles[0],
+        ##       "You can now see that this file has been ",
+        ##       "\nadded to the submenu 'recent files' under 'file'.\n")
+        Z.RecentFileNumber += 1
+    Z.OpenNewFile = OpenNewFile
+
+    def ClearRecentFiles():
+        Z.RecentFiles = []
+    Z.ClearRecentFiles = ClearRecentFiles
+
+    def RecentFilesMenu():
+        def substitute(txt):
+            def bar():
+                print("substitute function for opening '%s'."%txt)
+            return bar
+        output = ["recent files"] +\
+                   [[a,substitute(a)] for a in Z.RecentFiles ] +\
+                   [["___"]
+                   ,["clear history",Z.ClearRecentFiles]]
+        return output
+    Z.RecentFilesMenu = RecentFilesMenu
+
+    
+    self.master = tk.Tk()
+
+
+    # where the magic happens (updates the menu everytime it is called upon)
+    filemenu = [["file",    {"postcommand":
+                                 lambda:Z.menubar.reconfigure_submenu( Z.RecentFilesMenu() )}]
+                   ,SubMenu(Z.RecentFilesMenu())
+                   ,["___"]
+                   ,["quit",self.master.destroy]
+                ]
+                
+    Z.menubar = Menu(self.master, filemenu)
     
 
+    OpenNewFile_Button = tk.Button(self.master,
+                                   text="'open' new\nimaginary file",
+                                   command = Z.OpenNewFile)
+    OpenNewFile_Button.pack(padx=100,pady=30)
+
+    # self.master.after(TIME*1000,self.master.destroy) # if test fails, the window will destroy itself anyway...
+
+    self.master.wm_title("Example 'Recent Files'")
+
+    return Z.menubar
 
 
 
@@ -216,8 +283,34 @@ class Test_tkmenu(unittest.TestCase):
         with self.assertRaises(Exception):
             self.menubar._index_path((),("file",))
 
-        
-        
+    def test_initialize_menu_RecentFiles(self):
+        self.menubar = initialize_menu_RecentFiles(self)
+        self.assertTrue(self.menubar.get_handle("file","recent files").index("clear history")==4)
+
+        Z.OpenNewFile()
+        Z.OpenNewFile()
+
+        Z.menubar.reconfigure_submenu( Z.RecentFilesMenu() )
+
+        # test different ways of calling reconfigure_submenu
+        self.assertTrue(self.menubar.get_handle("file","recent files").index("clear history") == 6)
+
+        Z.OpenNewFile()
+        Z.menubar.reconfigure_submenu( Z.RecentFilesMenu(), path = ("file",) )
+        self.assertTrue(self.menubar.get_handle("file","recent files").index("clear history") == 7)
+
+        Z.OpenNewFile()
+        Z.menubar.reconfigure_submenu( Z.RecentFilesMenu(), path = "file" )
+        self.assertTrue(self.menubar.get_handle("file","recent files").index("clear history") == 8)
+
+        Z.ClearRecentFiles()
+        Z.menubar.reconfigure_submenu( SubMenu(Z.RecentFilesMenu()))
+        self.assertTrue(self.menubar.get_handle("file","recent files").index("clear history") == 1)
+
+        # clearing Z (might not know what happens if I don't. prolly nothing, but better safe than sorry...) 
+        for x in Z.__dict__.copy():
+            delattr(Z,x)
+
 
 
 
@@ -227,6 +320,8 @@ class Test_tkmenu(unittest.TestCase):
 
         try:    del self.master
         except: pass
+
+
 
 
   
@@ -242,3 +337,4 @@ def run_test_tkmenu():
 
 if __name__ == '__main__':
     run_test_tkmenu()
+    
