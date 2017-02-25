@@ -326,13 +326,14 @@ class Menu:
         menu_list:      A valid structured submenu. Can be an instance
                         of SubMenu. Label of this submenu should be the
                         one you are reconfiguring.
-        path:           Path leading up to the current submenu
-                        (OPTIONAL, IF the label of the submenu is not
+        path:           Path leading up to the current submenu # TODO describe how the path looks like
+                        (Optional, IF the label of the submenu is not
                         duplicated within the whole menu)
 
         *A good example for usage of this method would be for
         'recent files', which can change in size.
         """
+        
         if isinstance(menu_list,SubMenu):            
             menu_list = menu_list._menu_lists[0]
         else:
@@ -347,6 +348,9 @@ class Menu:
         submenu = submenu_class.submenu_dict["menu"]
         
         i = master.index(label)
+
+        if not master.type(i) == "cascade":
+            print("oh oohw") # TODO throw some error # and is htere anywhere an assertion that label is the same as the target?? i.e. no typo's and stuff ???
         master.entryconfig( i, menu = submenu)
 
         # update _handles_dict
@@ -365,26 +369,40 @@ class Menu:
                     handles_to_be_replaced.append(x)
                     
         self._update_handles_dict_from_SubMenu( master_path, submenu_class)
-        self._order_handles_dict()
+        
+        # self._order_handles_dict() #might slow down computations, while not yet realy necesary
 
 
-    # TODO write test
+    
     def _index_path(self, path, relative_path = "()"):
         """
         Returns indexed path from relative path in tuple.
         """
-        # testing if path is valid
+        if not isinstance(path,tuple):
+            error_message = "Path should be a tuple, containing strings which sequence defines the path"
+            raise TypeError(error_message)
+
+        # testing if path is valid        
         self.get_handle(*path)
         output = ()
         if relative_path == "()":
+            relative_path = ()
             path_so_far = ()
         else:
             # testing if relative_path is valid
+            if not isinstance(relative_path,tuple):
+                error_message = "relative_path should be a tuple, containing strings which sequence defines the path."
+                raise TypeError(error_message)
             self.get_handle(*relative_path) 
             path_so_far = relative_path
         # testing if path is valid
+
+        # test if relative path is part of real path
+        if not path[0:len(relative_path)] == relative_path:
+            error_message = "Path '%s' cannot be reached from relative path '%s'"%(path,relative_path)
+            raise PathError(error_message) # TODO
         
-        for x in path:
+        for x in path[len(relative_path):]:
             output += (self.get_handle(*path_so_far).index(x),)
             path_so_far += (x,)
         return output
@@ -443,18 +461,7 @@ class Menu:
             
                 
             
-
-            
-
-            
-        
-            
-        
-            
-                
-                
-            
-            
+     
         
 
 class SubMenu(Menu):
@@ -476,6 +483,8 @@ class SubMenu(Menu):
         self._menu_lists = (menu_list,)
         
 
+class PathError(Exception):
+    pass
     
 
 

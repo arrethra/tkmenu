@@ -200,6 +200,27 @@ class Test_tkmenu(unittest.TestCase):
         self.assertTrue(self.menubar.get_handle("file","milkproducts").entrycget(1,"menu")== (str(self.menubar.get_handle("file","milkproducts","cheese")),))
 
 
+    def test_index_path(self):
+        self.menubar = initialize_menu2(self)
+        self.assertTrue( self.menubar._index_path(()) == () )
+        self.assertTrue( self.menubar._index_path(("file",)) == (1,) )
+        self.assertTrue( self.menubar._index_path(("file","milkproducts")) == (1,2) )
+        self.assertTrue( self.menubar._index_path(("file","milkproducts","cheese")) == (1,2,1) )
+        self.assertTrue( self.menubar._index_path(("file","milkproducts"),("file",))               == (2,) )
+        with self.assertRaises(Exception):
+            self.menubar._index_path(("file","milkproducts","chee se"))
+        with self.assertRaises(Exception):
+            self.menubar._index_path("file")
+        with self.assertRaises(Exception):
+            self.menubar._index_path(("file",),"file")
+        with self.assertRaises(Exception):
+            self.menubar._index_path((),("file",))
+
+        
+        
+
+
+
     def tearDown(self):
         try:    self.master.destroy()
         except: pass
