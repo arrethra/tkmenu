@@ -30,6 +30,9 @@ class Menu:
     created through the class SubMenu from this module. See the example
     below on its application.
 
+    # TODO (verwerk dit):
+    Re-initializing this class again, will overwrite existing menu.
+
     Arguments:
     -Menu_lists are lists, in which the first item is a string for
      the title. This can be encapsulated within a list. Further items
@@ -113,7 +116,8 @@ class Menu:
         menu = tk.Menu(master)       
 
         self._handles_dict = col.OrderedDict()
-        self._handles_dict[''] = menu
+        if not isinstance(self,SubMenu):
+            self._handles_dict[''] = menu
         submenu = []
         submenu_name = []
         submenu_dict = {}
@@ -121,6 +125,7 @@ class Menu:
                 current_submenu_name = None
                  
                 current_submenu, current_submenu_name = self._initiate_submenu(menu, menu_list[0])
+
 
                 self._handles_dict[current_submenu_name] = current_submenu
                 
@@ -250,10 +255,17 @@ class Menu:
         return dict_with_keywords
 
     def _update_handles_dict_from_SubMenu(self, current_submenu_name, Submenu):
-        """TODO add doc """
+        """
+        When a submenu has been created, the handles have to passed to
+        the new parent(/master) in a orderly fashion. It also has to
+        remember the path leading up to the submenu. This makes sure
+        of that.
+        """
         for old_key in Submenu._handles_dict.keys():
             new_key = current_submenu_name + self._handle_separator + old_key
             self._handles_dict[new_key] = Submenu._handles_dict[old_key]
+
+            # TODO: instead of using a single string with separators, store them in a tuple..... (why didn't I think of that before >,<  )
 
     def get_handle(self,*path):
         """
@@ -264,8 +276,13 @@ class Menu:
         E.g., in the example given in docstring of class Menu,
         the handle of submenu 'cheese' would be obtained by
         menubar.get_handle("file","milkproducts","cheese")
+
+        For this method to work correctly, A submenu should not contain
+        duplicate labels. (TODO: otherwise returns the last
+        duplicate label????)
         """
-        
+
+
         if not path:
             return self._handles_dict[""]
         
@@ -294,11 +311,123 @@ class Menu:
 
             
         return self._handles_dict[full_path]
+
+
+    # TODO write test for this one
+    def reconfigure_submenu(self, menu_list, path=None):
+        """
+        Updates a submenu*. This must be an existing submenu.
+
+        arguments:
+        menu_list:      A valid structured submenu. Can be an instance
+                        of SubMenu. Label of this submenu should be the
+                        one you are reconfiguring.
+        path:           Path leading up to the current submenu
+                        (OPTIONAL, IF the label of the submenu is not
+                        duplicated within the whole menu)
+
+        *A good example for usage of this method would be for
+        'recent files', which can change in size.
+        """
+
+
+        # TODO: if extra handles are added/removed, the _handles_dict has to be adjusted
+        if isinstance(menu_list,SubMenu):
+            menu_list = menu_list._menu_lists[0]
+
+        submenu_class = SubMenu(menu_list)
+        if isinstance(path,str):
+            path = (path,)
+
+        master, label = self._find_master_and_label(menu_list, path)
+
+        submenu_class.initialize(master)
+        submenu = submenu_class.submenu_dict["menu"]
+
+
+        i = master.index(label)
+        master.entryconfig( i, menu = submenu)
+
+        # update _handles_dict
+        # first find the correct master_path
+        for x in self._handles_dict.keys():
+            if master == self._handles_dict[x]:
+                master_path = x
+                break
+        else:
+            raise Exception # why didn't I find master_path ??? TODO
+        # delete any handles that are no longer usefull
+        handles_to_be_replaced = []
+        for x in self._handles_dict.copy().keys():
+            if x[0:len(master_path)] == master_path and len(x) > len(master_path):
+                if x not in submenu_class._handles_dict.keys():
+                    handles_to_be_replaced.append(x)
+
+        self._update_handles_dict_from_SubMenu( master_path, submenu_class)
+
+
+        # TODO: if any submenus are created, the order from orderedDict will get messed up. either correct this order or remove order
+
+
+
+
+
+
+    def _find_master_and_label(self, menu_list, path=None):
+
+        # tests whether menu_list is valid, and retrieves label of that submenu
+        fake_master = tk.Menu()
+        fake_submenu = SubMenu(menu_list)
+        fake_submenu.initialize(fake_master)
+        label = fake_submenu.submenu_dict['label']
+        del fake_master, fake_submenu
+
+        if path:
+            error_raised = ""
+            try:
+                master = self.get_handle(*path)
                 
-                
+            except ValueError as e:
+                error_raised = str(e)
+            if error_raised:
+                error_message = "Error with path. " + error_raised
+                raise ValueError(error_message)
+
+        else:
+            sep = self._handle_separator
+
+            potential_labels = []
+            for x in self._handles_dict.keys():
+                if x.split(sep)[-1] == label:
+                    potential_labels += [x]
+
+            if   len(potential_labels) == 1:
+                path = potential_labels[0].split(sep)[:-1]
+                master = self.get_handle(*path)
+            elif len(potential_labels) == 0:
+                all_labels = [x.split(sep)[-1] for x in self._handles_dict.keys()]
+                all_labels = [x for x in all_labels if x]
+                error_message = "label '%s' from argument 'menu_list' not found as existing submenu."%(label) +\
+                                " Specify valid label, or enter valid path (second argument)." +\
+                                " Possible labels are '%s'."%("', '".join(all_labels))
+                raise KeyError(error_message) # TODO: change error
+            elif len(potential_labels)>1:
+                error_message = "Multiple labels found with the same label '%s'. Specify with argument 'path' which one you need."%label # TODO or with master ??
+                raise KeyError(error_message)
+
+        return master, label
             
-            
-        
+
+
+
+
+
+
+
+
+
+
+
 
 class SubMenu(Menu):
     """
