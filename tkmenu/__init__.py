@@ -4,6 +4,8 @@ somewhat 'cloudy'. With the help of this module, that code gets cleaned
 up and enables a much clearer overview of the structure of the
 'menu-to-be'.  For such an example, see main class Menu.
 
+TODO: change this text a bit
+
 Author: Arrethra ( https://github.com/arrethra )
 Created with help of Hans Maree ( https://github.com/snah )
 Under MIT license
@@ -32,13 +34,13 @@ class Menu:
     overwrite the existing menu.
 
     Arguments:
-    -Menu_lists are lists, in which the first item is a string for
-     the title. This can be encapsulated within a list. Further items
-     in the list are the separate options in that (sub)menu.
+    -master:        The handle of the window in which the menu is to be
+                    created.
+    -menu_lists:    Each argument is a list that defines a single
+                    dropdown-menu. Their structure is defined below.
 
-
-    Requirements of structure (or see example below):
-    - Each separate 'main-menu' is added as an argument to this class.
+    Requirements of structure of menu_lists(or see example below):
+    - Each separate dropdown-menu is added as an argument to this class.
     - Each 'main-menu' is a list/iterable, containing its menu-items.
           These menu items are encapsulated in a list, or within a
           SubMenu which creates an expandable/foldable menu-item.
@@ -62,7 +64,6 @@ class Menu:
        - The function that is coupled to a menu-item (its 'command')
             can be added plainly to the encapsulating list. Reminder:
             This function should not have been called yet.
-            
     
     Example:
     
@@ -143,7 +144,7 @@ class Menu:
                             if not isinstance(text,str):
                                 error_message = "In the list of a menu-item, first item must be a string that defines the label. However, type %s was found."\
                                                 %type(text)
-                                raise TypeError(error_message)
+                                raise LabelError(error_message)
                             dict_with_keywords = self._get_keywords(menu_item)
                             
                             if self._identify_separator(text):
@@ -179,7 +180,7 @@ class Menu:
             except:
                 pass
         else:            
-            tk.Tk.config(master,menu = menu)
+            tk.Tk.config(master, menu = menu)
 
         return self
             
@@ -229,10 +230,12 @@ class Menu:
 
     def _get_keywords(self, menu_item):
         """
-        Extracts the keywords from a given menu item.
+        Extracts the keywords/options from a given menu item, that are
+        to be set as properties of the menu-item. For more information
+        on options, see http://effbot.org/tkinterbook/menu.htm 
         It also recognizes the function that is to be set as the
-        command. This function can be added claiming to the list
-        that makes up menu_item. 
+        command. This function can be added to the list of options that
+        makes up menu_item. 
         """
         dict_with_keywords = {}
         for elem in menu_item[1:]:
@@ -268,6 +271,25 @@ class Menu:
             self._handles_dict[new_key] = Submenu._handles_dict[old_key]
 
 
+    def possible_paths(self,relative_path = "()"):
+        """
+        Returns all possible paths, collected in a tuple.
+        If relative_path is specified, returns all (absolute) paths
+        that can be reached from relative_path.
+        (printing these paths gives you the idea how to format a path.)
+        """
+        self._order_handles_dict()
+        output = tuple(self._handles_dict.keys())
+        if relative_path != "()":
+            if isinstance(relative_path,str):
+                relative_path = (relative_path,)            
+            if self._assert_path(relative_path):
+                raise self._assert_path(relative_path)
+            else:
+                output = tuple(a for a in output if
+                               a[0:len(relative_path)]==relative_path and not a == relative_path) 
+        return output
+
 
     def get_handle(self,*path):
         """
@@ -277,72 +299,92 @@ class Menu:
         
         E.g., in the example given in docstring of class Menu,
         the handle of submenu 'cheese' would be obtained by
-        menubar.get_handle("file","milkproducts","cheese")
+        menubar.get_handle("file","milkproducts","cheese")  
 
-        For this method to work correctly, A submenu should not contain
-        duplicate labels. (TODO: otherwise returns the last
-        duplicate label????)
+        For this method to work correctly, a menu shouldn't contain
+        multiple submenus with the same label (If so, the first
+        duplicate is returned)
         """
-        
-        
+        if len(path)==1 and isinstance(path[0],tuple):
+            path = path[0]
         if not path:
             return self._handles_dict[()]
+
+        if self._assert_path(*path):
+            raise self._assert_path(*path)
         
+        return self._handles_dict[path]
+
+
+
+    def _assert_path(self,*path):
+        """
+        Test if path is valid. If not, returns the relevant Exception
+        (which you need to raise yourself)
+        See method possible_paths for more information about path.
+        """
+
+        if len(path)==1 and isinstance(path[0],tuple):
+            path = path[0]
+
         _handles_dict_keys = self._handles_dict.keys()
-        
+
         for i,path_partial in enumerate(path):
             if not isinstance(path_partial,str):
-                error_message = "partial path must be string, but found type %s."%(type(path_partial))
-                raise TypeError(error_message)
-            
+                error_message = "partial path (argument/element #%s) is not of type string, but of type %s."%((i+1),type(path_partial))
+                return TypeError(error_message)
             full_path = path[0:i+1]
             if not full_path in _handles_dict_keys: # Asses if built up path is correct so far.
                 # If error, find out which keywords would have been correct in that position
                 lesser_path = full_path[:-1] # path leading up to this current stage
-
                 
                 possible_keys = [a[len(lesser_path):] for a in _handles_dict_keys if a[0:len(lesser_path)] == lesser_path] # must start with lesser_path, and also removes it
-
                 
                 possible_keys = [a for a in possible_keys if len(a)==1] # remove any paths after base path
                 
                 if len(possible_keys):
+
                     error_message = "Argument #%s '%s' unrecognised. Correct argument at that place could have been '%s'."%(i+1,path_partial,"', '".join(possible_keys))
                 else:
                     error_message = "Argument #%s '%s' unrecognised. There is no such path possible with that Argument."%(i+1,path_partial)
-                raise ValueError(error_message)
-
-            
-        return self._handles_dict[full_path]
-
-    # TODO: several methods need path, but how the argument is inserted, is not always consistent. please correct this... :)
+                return PathError(error_message)
 
 
-    # TODO write test for this one
+    # TODO: what is the error when there is a typo is input-label??
     def reconfigure_submenu(self, menu_list, path=None):
         """
-        Updates a submenu*. This must be an existing submenu.
+        Updates/converts a submenu* to the submenu as defined by
+        menu_list. The submenu that is being overwritten must be an
+        existing submenu. 
 
         arguments:
-        menu_list:      A valid structured submenu. Can be an instance
-                        of SubMenu. Label of this submenu should be the
-                        one you are reconfiguring.
-        path:           Path leading up to the current submenu # TODO describe how the path looks like
-                        (Optional, IF the label of the submenu is not
-                        duplicated within the whole menu)
+        -menu_list:     A valid structured submenu. Can already be an
+                        instance of SubMenu. Label** of this submenu must
+                        be the same as the one you are reconfiguring.
+        -path:          Optional, IF the label of the submenu is not
+                        duplicated within the whole menu.
+                        Defines the path leading up to the current
+                        submenu. path is entered as tuples that contains a
+                        sequence of strings which make up the path. This
+                        sequence is equal to the different labels of
+                        (sub)menus in the path. See method possible_paths
+                        for more information about path.
 
         *A good example for usage of this method would be for
         'recent files', which can change in size.
+        **For just changing labels, see method entryconfig from tk.Menu.
         """
+        if isinstance(path,str):
+            path = (path,)
+        if not isinstance(path,type(None)) and self._assert_path(path):
+            raise self._assert_path(path)
         
         if isinstance(menu_list,SubMenu):
             submenu_class = menu_list
             menu_list = menu_list._menu_lists[0]
-            
         else:
             submenu_class = SubMenu(menu_list)
-        if isinstance(path,str):
-            path = (path,)
+
 
         master, label = self._find_master_and_label(menu_list, path)        
 
@@ -353,7 +395,8 @@ class Menu:
         i = master.index(label)
 
         if not master.type(i) == "cascade":
-            print("oh oohw") # TODO throw some error # and is htere anywhere an assertion that label is the same as the target?? i.e. no typo's and stuff ???
+            error_message = "Could not find the correct parent for this SubMenu"
+            raise Exception(error_message)
         master.entryconfig( i, menu = submenu)
 
         # update _handles_dict
@@ -363,10 +406,11 @@ class Menu:
                 master_path = x
                 break
         else:
-            error_message = "# why didn't I find master_path ??? TODO not all handles were reset to the correct handle"
+            error_message = "Could not find correct path to master. "+\
+                            "(this error should never happen... :/  )"
             raise PathError(error_message)
-        # delete any handles that are no longer usefull
         
+        # delete any handles that are no longer usefull
         for x in self._handles_dict.copy().keys():
             if x[0:len(master_path)] == master_path and len(x) > len(master_path):
                 if x not in submenu_class._handles_dict.keys():
@@ -375,19 +419,30 @@ class Menu:
         self._update_handles_dict_from_SubMenu( master_path, submenu_class)
 
         # self._order_handles_dict() #might slow down computations, while not yet realy necesary
-
-
     
+
     def _index_path(self, path, relative_path = "()"):
         """
-        Returns indexed path from relative path in tuple.
+        Returns indexed path, in a tuple. If relative_path is specified,
+        it returns the path relative to that path.
+
+        path (and relative_path) are entered as tuples that contain a
+        sequence of strings which make up the path. This sequence is
+        equal to the different labels of (sub)menus in the path.        
+        See method possible_paths for more information about path.
         """
-        if not isinstance(path,tuple):
-            error_message = "Path should be a tuple, containing strings which sequence defines the path"
+        if isinstance(path,str):
+            path = (path,)
+        elif not isinstance(path,tuple):
+            error_message = "Path should be a tuple, containing strings to"+\
+                            " define the path, but found type %s."%type(path)
             raise TypeError(error_message)
 
-        # testing if path is valid        
-        self.get_handle(*path)
+        # testing if path is valid
+        if self._assert_path(path):
+            raise self._assert_path(path)
+
+        #self.get_handle(*path)
         output = ()
         if relative_path == "()":
             relative_path = ()
@@ -396,15 +451,16 @@ class Menu:
             # testing if relative_path is valid
             if not isinstance(relative_path,tuple):
                 error_message = "relative_path should be a tuple, containing strings which sequence defines the path."
-                raise TypeError(error_message)
-            self.get_handle(*relative_path) 
+                raise PathError(error_message)
+            if self._assert_path(relative_path):
+                raise self._assert_path(relative_path)
             path_so_far = relative_path
         # testing if path is valid
 
         # test if relative path is part of real path
         if not path[0:len(relative_path)] == relative_path:
             error_message = "Path '%s' cannot be reached from relative path '%s'"%(path,relative_path)
-            raise PathError(error_message) # TODO
+            raise PathError(error_message)
         
         for x in path[len(relative_path):]:
             output += (self.get_handle(*path_so_far).index(x),)
@@ -415,30 +471,43 @@ class Menu:
     def _order_handles_dict(self):
         self._handles_dict = col.OrderedDict(sorted(self._handles_dict.items(), key = lambda x: self._index_path(x[0]) ))
 
-        
-    # TODO write test ??
+
+    
     def _find_master_and_label(self, menu_list, path=None):
+        """
+        Retrieves the parent(/master) and label of that submenu.
+        If specified, path is a tuple of strings, which sequence
+        describes the path (of labels of the submenus).
+        See method possible_paths for more information about path.
+        """
         
-        # tests whether menu_list is valid, and retrieves label of that submenu        
-        fake_master = tk.Menu()
-        fake_submenu = SubMenu(menu_list)
-        fake_submenu.initialize(fake_master)
-        label = fake_submenu.submenu_dict['label']
-        del fake_master, fake_submenu
-        
+        first_item = menu_list[0]
+        # find label
+        if isinstance(first_item,str):
+            label = first_item
+        else:
+            label_s = [x for x in first_item if isinstance(x,str)]
+            if len(label_s)==1:
+                label = label_s[0]
+            else:
+                error_message = "In the list of a menu-item, first item must be a string that defines the label. However, type %s was found."\
+                                                %type(text)
+                raise LabelError(error_message)
+                
+                        
+        # find master
         if path:
+            # if path is specified, master should be easy to find
             error_raised = ""
             try:
-                master = self.get_handle(*path)
-                
-            except ValueError as e:
+                master = self.get_handle(*path)                
+            except PathError as e:
                 error_raised = str(e)
             if error_raised:
-                error_message = "Error with path. " + error_raised
-                raise ValueError(error_message)
-            
-        else:  
-            
+                error_message = error_raised
+                raise PathError(error_message)
+        else:            
+            # searches  label in _handles_dict, and from there checks who the parent is
             potential_labels = []
             for x in self._handles_dict.keys():
                 if x and x[-1] == label:
@@ -448,25 +517,22 @@ class Menu:
                 path = potential_labels[0][:-1]
                 master = self.get_handle(*path)
             elif len(potential_labels) == 0:
-                all_labels = [x[-1] for x in self._handles_dict.keys()]
+                all_labels = [x[-1] for x in self._handles_dict.keys() if len(x)]
                 all_labels = [x for x in all_labels if x]
                 error_message = "label '%s' from argument 'menu_list' not found as existing submenu."%(label) +\
                                 " Specify valid label, or enter valid path (second argument)." +\
                                 " Possible labels are '%s'."%("', '".join(all_labels))
-                raise KeyError(error_message) # TODO: change error
+                raise LabelError(error_message)
             elif len(potential_labels)>1:
-                [print("bla",a) for a in potential_labels]
-                error_message = "Multiple labels found with the same label '%s'. Specify with argument 'path' which one you need."%label 
-                raise KeyError(error_message)
+                error_message = "Multiple labels found with same label '%s'. Specify with argument 'path' which one you need."%label 
+                raise LabelError(error_message)
             
         return master, label
-            
-                
-            
-                
-            
-     
-        
+
+# TODO: let Menu also accept SubMenu ..??
+# TODO let Submenu accept multiple arguments
+
+
 
 class SubMenu(Menu):
     """
@@ -481,8 +547,7 @@ class SubMenu(Menu):
                       method initialize. It holds a dictionary with
                       keywords for the method tk.Menu.add_cascade which
                       creates a submenu.
-    """
-    
+    """    
     def __init__(self, menu_list):
         self._menu_lists = (menu_list,)
         
@@ -490,73 +555,15 @@ class SubMenu(Menu):
 class PathError(Exception):
     pass
     
-
+class LabelError(Exception):
+    pass
 
 
 
 if __name__ == "__main__":
-##    ##### EXAMPLE 2 #####
-##    master = tk.Tk()
-##
-##    import datetime
-##    time_string = ""
-##    def update_clock():
-##        global time_string
-##        time_string = str(datetime.datetime.now().time()).split(".")[0]
-##        try:
-##            A.get_handle("get current time").entryconfig(0,label=time_string)
-##        except: pass
-##    update_clock()
-##
-##    radiobutton_var = tk.StringVar()
-##    radiobutton_var.set("cat")
-##
-##    filemenu = [["file"]
-##                ,["save",lambda:print("save")]
-##                ,"---"
-##                ,SubMenu(["milkproducts"
-##                          ,["whey",  lambda:print("whey")]
-##                          ,SubMenu([["cheese",{"foreground":"red"}]
-##                                     ,["20%",lambda:print("cheese 20%")]
-##                                     ,["40%",lambda:print("cheese 40%")]
-##                                    ])
-##                           ,["yogurt",lambda:print("yogurt")]
-##                          ])
-##                ,SubMenu(["vegetables"
-##                          ,["lettuce",    lambda:print("lettuce")]
-##                          ,["cauliflower",lambda:print("cauliflower")]
-##                         ])
-##                ,["---"]
-##                ,["quit",master.destroy]
-##                ]
-##
-##    editmenu = [["edit",{"tearoff":1}]
-##                ,["copy",lambda:print("copy")]
-##                ]
-##
-##    clockmenu= [["get current time",{"postcommand":update_clock}]
-##                ,[time_string]
-##                ]
-##
-##    one_choice_only = \
-##               [["one choice only"]
-##                ,["cat",{"type":"radiobutton", "variable":radiobutton_var, "value":"cat"}]
-##                ,["dog",{"type":"radiobutton", "variable":radiobutton_var, "value":"dog"}]
-##                ]
-##
-##    A = Menu(master, filemenu, editmenu, clockmenu, one_choice_only)
-##    master.wm_title("Example 2")
-
-
-##    master.mainloop()
-
-
-
-
     ####### TEST #######
     from test.test_tkmenu import Test_tkmenu
     import unittest
-
     unittest.main()
 
     

@@ -7,7 +7,7 @@ import tkinter as tk
 TIME = 1
 
 try:
-    from tkmenu import Menu, SubMenu
+    from tkmenu import Menu, SubMenu, LabelError, PathError
 except:
     # This garbage just so to import 'tkmenu', if it can't be done via the main way.
     import sys
@@ -18,7 +18,7 @@ except:
         sys.path.insert(0, grandparent_folder)
     del sys
     del current_folder, parent_folder, grandparent_folder
-    from tkmenu import Menu, SubMenu
+    from tkmenu import Menu, SubMenu, LabelError, PathError
 
 # TODO: now you're testing with static examples, but use an example with an automatic iterator... ?
 
@@ -231,7 +231,7 @@ def initialize_menu_RecentFiles(self):
                                    command = Z.OpenNewFile)
     OpenNewFile_Button.pack(padx=100,pady=30)
 
-    # self.master.after(TIME*1000,self.master.destroy) # if test fails, the window will destroy itself anyway...
+    self.master.after(TIME*1000,self.master.destroy) # if test fails, the window will destroy itself anyway...
 
     self.master.wm_title("Example 'Recent Files'")
 
@@ -277,8 +277,6 @@ class Test_tkmenu(unittest.TestCase):
         with self.assertRaises(Exception):
             self.menubar._index_path(("file","milkproducts","chee se"))
         with self.assertRaises(Exception):
-            self.menubar._index_path("file")
-        with self.assertRaises(Exception):
             self.menubar._index_path(("file",),"file")
         with self.assertRaises(Exception):
             self.menubar._index_path((),("file",))
@@ -307,9 +305,42 @@ class Test_tkmenu(unittest.TestCase):
         Z.menubar.reconfigure_submenu( SubMenu(Z.RecentFilesMenu()))
         self.assertTrue(self.menubar.get_handle("file","recent files").index("clear history") == 1)
 
+        
+        BLA = Z.RecentFilesMenu()
+        BLA[0] = "bla"
+        with self.assertRaises(LabelError):
+            Z.menubar.reconfigure_submenu( SubMenu(BLA))
+            
+
+        
+
         # clearing Z (might not know what happens if I don't. prolly nothing, but better safe than sorry...) 
         for x in Z.__dict__.copy():
             delattr(Z,x)
+
+    def test_possible_paths(self):
+        self.menubar = initialize_menu2(self)
+        self.assertTrue(self.menubar.possible_paths() \
+                                      ==  (  ()
+                                            ,('file',)
+                                            ,('file', 'milkproducts')
+                                            ,('file', 'milkproducts', 'cheese')
+                                            ,('file', 'vegetables')
+                                            ,('edit',)
+                                            ,('get current time',)
+                                            ,('one choice only',)
+                                           ) )
+        self.assertTrue(self.menubar.possible_paths("file")\
+                                     ==   (  ('file', 'milkproducts')
+                                            ,('file', 'milkproducts', 'cheese')
+                                            ,('file', 'vegetables')                                   
+                                           ) )
+        self.assertTrue(self.menubar.possible_paths(("file",))\
+                                     ==   (  ('file', 'milkproducts')
+                                            ,('file', 'milkproducts', 'cheese')
+                                            ,('file', 'vegetables')                                   
+                                           ) )
+        
 
 
 
@@ -319,6 +350,9 @@ class Test_tkmenu(unittest.TestCase):
         except: pass
 
         try:    del self.master
+        except: pass
+
+        try:    del self.menubar
         except: pass
 
 
