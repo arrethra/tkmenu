@@ -20,8 +20,8 @@ master = tk.Tk()
 
 ## Whenever the menu 'get current time' opens, this functions is called to
 ## update the menu(/time), thereby showing the current time as a menu-item.
-## This behavior is enabled by passing the keyword 'postcommand' to that
-## (sub)menu (see the menu-structure below).
+## This behavior is enabled by passing the keyword/option 'postcommand' to
+## that (sub)menu (see the menu-structure 'clockmenu' below).
 def update_clock():
     time_string = str(datetime.datetime.now().time()).split(".")[0]
     A.get_handle("get current time").entryconfig(0,label=time_string)

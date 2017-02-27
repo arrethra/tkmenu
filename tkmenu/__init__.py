@@ -1,10 +1,11 @@
 """
-When creating a menu in tkinter, the code might make a clear overview
-somewhat 'cloudy'. With the help of this module, that code gets cleaned
-up and enables a much clearer overview of the structure of the
-'menu-to-be'.  For such an example, see main class Menu.
+This modules creates a menu in tkinter while enabling the user to have
+a clear overview of the structure of the (intended) menu.
+Using the regular statements from tkinter make a clear overview of the
+structure somehat cloudy. With the help of this module, that code gets
+cleaned up and enables a much clearer overview of the structure of the
+'menu-to-be'. For such an example, see main class Menu.
 
-TODO: change this text a bit
 
 Author: Arrethra ( https://github.com/arrethra )
 Created with help of Hans Maree ( https://github.com/snah )
@@ -103,7 +104,7 @@ class Menu:
 
     def initialize(self, master):
         """
-        Initializes this class further.
+        Initializes this class further. Normally for private use only.
         -When defining the class Menu, this method is automatically
            called by __init__-method.
         -When defining the class SubMenu, this method needs to be
@@ -299,7 +300,11 @@ class Menu:
         
         E.g., in the example given in docstring of class Menu,
         the handle of submenu 'cheese' would be obtained by
-        menubar.get_handle("file","milkproducts","cheese")  
+        menubar.get_handle("file","milkproducts","cheese")
+
+        Getting the handles of submenus enables certain methods from 
+        tkinter.Menu, such as entrycget, entryconfig, index, type. 
+        For more information, see http://effbot.org/tkinterbook/menu.htm
 
         For this method to work correctly, a menu shouldn't contain
         multiple submenus with the same label (If so, the first
@@ -358,8 +363,9 @@ class Menu:
         existing submenu. 
 
         arguments:
-        -menu_list:     A valid structured submenu. Can already be an
-                        instance of SubMenu. Label** of this submenu must
+        -menu_list:    A valid structure, that follows the requirements
+                       to create a (Sub)Menu. Can also already be an
+                       instance of SubMenu. Label** of this submenu must
                         be the same as the one you are reconfiguring.
         -path:          Optional, IF the label of the submenu is not
                         duplicated within the whole menu.
@@ -546,7 +552,7 @@ class SubMenu(Menu):
     -submenu_dict:    This attribute only exists once initialized by
                       method initialize. It holds a dictionary with
                       keywords for the method tk.Menu.add_cascade which
-                      creates a submenu.
+                      can create a submenu. 
     """    
     def __init__(self, menu_list):
         self._menu_lists = (menu_list,)

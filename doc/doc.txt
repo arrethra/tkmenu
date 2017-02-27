@@ -1,0 +1,128 @@
+Documentation of class Menu and SubMenu
+(quite similar to calling 'help' on python, but not exactly identical)
+
+This modules creates a menu in tkinter while enabling the user to have
+a clear overview of the structure of the (intended) menu.
+Using the regular statements from tkinter make a clear overview of the
+structure somehat cloudy. With the help of this module, that code gets
+cleaned up and enables a much clearer overview of the structure of the
+'menu-to-be'. There are examples provided in the appropiate folder.
+ 
+
+class Menu
+    Creates a menu in tkinter, while enabling the user to have a clear
+    overview of the structure of the (intended) menu. Submenus can be
+    created through the class SubMenu from this module. See the example
+    below on its application. Re-initializing this class again, will
+    overwrite the existing menu. 
+   
+    Arguments:
+    -master:        The handle of the window in which the menu is to be
+                    created.
+    -menu_lists:    Each argument is a list that defines a single
+                    dropdown-menu. The requirements of structure is 
+                    defined below.
+   
+    Requirements of structure of menu_lists:
+    (It is recommended to look at Example 1 for more clarity)
+    - Each separate dropdown-menu is added as an argument to this class.
+    - Each 'main-menu' is a list/iterable, containing its menu-items.
+          These menu items are encapsulated in a list, or within a
+          SubMenu which creates an expandable/foldable menu-item.
+      - Title/label must be first element of the list, either it be
+            the label of the menu or the label of a simple menu-item.
+            This can be a string or a string encapsulated within a list.
+      - Extra options for menu(-items) are added as a dictionary, in
+            which the keys are the option-keywords in string-form.
+            For options that govern entire (sub)menu's, the dictionary
+            is added to the first element (which must now be a list).
+            For menu-items, this dictionary is added to their
+            encapsulating list. Possible options can be found at
+            http://effbot.org/tkinterbook/menu.htm
+             Note that this class accepts "type" as a keyword for an
+             option, which can have the values "command"(default),
+             "radiobutton" or "checkbutton". See methods
+             add_radiobutton and add_checkbutton for their specific
+             implications.
+       - A separator can be added between menu-items, and is indicated
+            with a string that starts with either "___" or "---".
+       - The function that is coupled to a menu-item (its 'command')
+            can be added plainly to the encapsulating list. Reminder:
+            This function should not have been called yet.
+
+class SubMenu
+    Inherited from Menu
+    This class can make a single submenu, in conjunction with the class
+    Menu. When initializing this class, the input is only stored. The
+    method 'initialize' further initializes SubMenu.
+
+    Argument:
+    -menu_list:       Valid structure to create a submenu. This structure
+                      must satisfy all requirements as stated in Menu.                     
+   
+    Attributes:
+    -menu_lists:      The input upon creating this class.
+    -submenu_dict:    This attribute only exists once initialized by
+                      method initialize. 
+                      It holds a dictionary with keywords for the 
+                      method tk.Menu.add_cascade which can create a 
+                      submenu.
+
+   
+Methods (for both classes): 
+
+    initialize(self, master)
+        Initializes this class further. Normally for private use only.
+        -When defining the class Menu, this method is automatically
+           called by __init__-method.
+        -When defining the class SubMenu, this method needs to be
+           called separately (which automaticaly happens if the class
+           SubMenu is entered into Menu, as can be seen in the example
+           of the Menu doc-string )
+
+    get_handle(self, *path)
+        Get the handle of a (sub)menu. The arguments *path are the full
+        sequence of labels (of type string) of that specific submenu.
+        Absence of 'path' (i.e. no arguments) returns the main handle.
+       
+        E.g., in the example given in docstring of class Menu,
+        the handle of submenu 'cheese' would be obtained by
+        menubar.get_handle("file","milkproducts","cheese")  
+
+        Getting the handles of submenus enables certain methods from 
+        tkinter.Menu, such as entrycget, entryconfig, index, type. 
+        For more information, see http://effbot.org/tkinterbook/menu.htm
+       
+        For this method to work correctly, a menu shouldn't contain
+        multiple submenus with the same label (If so, the first
+        duplicate is returned)
+
+    possible_paths(self, relative_path='()')
+        Returns all possible paths, collected in a tuple.
+        If relative_path is specified, returns all (absolute) paths
+        that can be reached from relative_path.
+        (printing these paths gives you the idea how to format a path.)
+
+    reconfigure_submenu(self, menu_list, path=None)
+        Updates/converts a submenu* to the submenu as defined by
+        menu_list. The submenu that is being overwritten must be an
+        existing submenu. 
+       
+        arguments:
+        -menu_list:     A valid structure, that follows the requirements to
+                        create a (Sub)Menu. Can also already be an
+                        instance of SubMenu. Label** of this submenu must
+                        be the same as the one you are reconfiguring.
+        -path:          Optional, IF the label of the submenu is not
+                        duplicated within the whole menu.
+                        Defines the path leading up to the current
+                        submenu. path is entered as tuples that contains a
+                        sequence of strings which make up the path. This
+                        sequence is equal to the different labels of
+                        (sub)menus in the path. See method possible_paths
+                        for more information about path.
+       
+        *A good example for usage of this method would be for
+         'recent files', which can change in size.
+        **For just changing labels or other simple options,
+         see method entryconfig from tk.Menu
