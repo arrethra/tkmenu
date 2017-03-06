@@ -1,6 +1,6 @@
 import tkinter as tk
-from Bind import Bind
-import Bind as bnd
+from bind import Bind
+import bind 
                
                
         
@@ -27,7 +27,7 @@ def foo(key):
         print(key)
     return key, bar
 
-for key in bnd._VALID_KEYS:
+for key in bind._VALID_KEYS:
     try:
         master.bind_all( *foo(key)  )
     except:

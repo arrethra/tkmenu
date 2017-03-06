@@ -11,7 +11,7 @@ def list_lower(lst):
             lst_output.append(item)
     return lst_output
 
-
+       #name to show in menu   # name that binds an event
 VALID_KEYS_LIBRARY = \
           [["Ctrl",             "<Control_L>"]
           ,["Control",          "<Control_L>"]
@@ -39,13 +39,13 @@ VALID_KEYS_LIBRARY = \
           ,["NumLock",          "<Num_Lock>"]
           ,["ScrollLock",       "<Scroll_Lock>"]
           ,["Break",            "Cancel"]                    
-          ,["SpaceBar",         "<space>"]
-          ,["<",                "<less>"]
-          ,["-",                "<minus>"]                     ] +\
-           [["F%s"%i,"<F%s>"%i] for i in range(1,13)           ] +\
+          ,["SpaceBar",         "<space>"]                     ] +\
            [[s.upper(), s]      for s in string.ascii_lowercase] +\
            [[i,i]               for i in string.digits         ] +\
-           [[o,o]               for o in string.punctuation if not o in "-<'\""]
+           [["F%s"%i,"<F%s>"%i] for i in range(1,13)           ] +\
+          [["<",                "<less>"]
+          ,["-",                "<minus>"]                     ] +\
+           [[o,o]               for o in string.punctuation if not o in "-<"]
 
 _VALID_KEYS       = [a[1] for a in VALID_KEYS_LIBRARY]
 _VALID_KEYS_NAMES = [a[0] for a in VALID_KEYS_LIBRARY]
@@ -57,11 +57,9 @@ MODIFIERS =   [["Ctrl",                 "Control"]
               ,["Shift",                "Shift"]
                ]
 
-MODIFIERS_KEYS  = [a[1] for a in MODIFIERS]
-MODIFIERS_NAMES = [a[0] for a in MODIFIERS]
-MODIFIERS_NAMES_lower = list_lower(MODIFIERS_NAMES)
-
-
+_MODIFIERS_KEYS  = [a[1] for a in MODIFIERS]
+_MODIFIERS_NAMES = [a[0] for a in MODIFIERS]
+_MODIFIERS_NAMES_lower = list_lower(_MODIFIERS_NAMES)
 
 
 class Bind:
@@ -69,16 +67,8 @@ class Bind:
     TODO
     """
 
-
-
-    
-
-
-
-
-
-    
     SPLITTERS = "+-"
+    QUOTATIONS = "\'\""
     def __init__(self, text, function, keepformat=False, master = None):       
 
         if self._assert_function(function):
@@ -90,20 +80,20 @@ class Bind:
             return TypeError(error_message)
         
         self.text = text
-        
-        
+
         for split_char in self.SPLITTERS:
-            list_keys = text.split(split_char)
+            list_keys =  self._are_there_any_quotes(text)
+            if not list_keys:
+                list_keys = text.split(split_char)
                 
             if len(list_keys)>1 and list_keys[-1]:
-                #check for errors
+                #checks for errors
                 if self._assert_validity_key(list_keys[-1]):
                     raise self._assert_validity_key(list_keys[-1])
                 if self._assert_validity_modifier(list_keys[0:-1]):
                     raise self._assert_validity_modifier(list_keys[0:-1])
                 
                 self.output, self.text_formatted = self._form_output_with_modifier(list_keys)
-                
                 break
         else:
             if self._assert_validity_key( text ):
@@ -111,13 +101,18 @@ class Bind:
 
             self.output, self.text_formatted = self._form_output_without_modifier(text)
 
+        if self._assert_output(self.output):
+            raise self._assert_output(self.output)
+
         self.output_dict = {"accelerator":self.text_formatted,
                             "command":    self.function}
         if keepformat:
-            self.output_dict["accelerator"] = self.text
+            if isinstance(keepformat,str):
+                self.output_dict["accelerator"] = keepformat
+            else:
+                self.output_dict["accelerator"] = self.text
 
         if master:
-            self.master = master
             self.bind(master)
 
 
@@ -131,10 +126,10 @@ class Bind:
         return output, text_formatted
     
     def _form_output_with_modifier(self,list_keys):
-        modifiers_indices = [MODIFIERS_NAMES_lower.index(a.lower()) for a in list_keys[0:-1]]
+        modifiers_indices = [_MODIFIERS_NAMES_lower.index(a.lower()) for a in list_keys[0:-1]]
         key_index         =  _VALID_KEYS_NAMES_lower.index( list_keys[-1].lower() )
 
-        modifier_keys = [MODIFIERS_KEYS[i] for i in modifiers_indices]
+        modifier_keys = [_MODIFIERS_KEYS[i] for i in modifiers_indices]
 
         last_key_name = _VALID_KEYS[key_index]
         if last_key_name.startswith("<"):
@@ -147,7 +142,7 @@ class Bind:
             
         output = "-".join(modifier_keys + [last_key_name])
         output = "<" + output + ">"
-        text_formatted = "+".join([MODIFIERS_NAMES[i] for i in modifiers_indices] + [_VALID_KEYS_NAMES[key_index]])
+        text_formatted = "+".join([_MODIFIERS_NAMES[i] for i in modifiers_indices] + [_VALID_KEYS_NAMES[key_index]])
         
         return output, text_formatted
 
@@ -156,6 +151,8 @@ class Bind:
         """
         TODO
         """
+        # can be bound to a button, apparently, and still work.
+        # TODO got to test some more on which items it works, and on which not
 ##        if not isinstance(master,tk.Tk):
 ##            error_message = "TODO"
 ##            raise TypeError(error_message)
@@ -166,17 +163,99 @@ class Bind:
         
         
         
+    def _are_there_any_quotes(self,text):
+        counter = [0]*len(self.QUOTATIONS)
+        for i,q in enumerate(self.QUOTATIONS):
+            for t in text:
+                if t==q:
+                    counter[i] += 1                    
+        output = False
+        text_copy = text
+        for i,c in enumerate(counter):
+            q = self.QUOTATIONS[i]
+            if c>1 and c%2==0:
+                parts = []
+                assert int(c/2) == c/2
+                for a in range(int(c/2)):
+                    index1 = text_copy.index(q)
+                    if a==0 and text_copy[:index1]:
+                        parts.append((text_copy[:index1],))
+                    text_copy = text_copy[index1+1:]
+                    index2 = text_copy.index(q)
+                    parts.append([text_copy[:index2]])
+                    text_copy = text_copy[index2+1:]
+                    if a==c/2-1 and text_copy[:index2]:
+                        parts.append((text_copy[:index2],))
+
+                output = []
+                for p in parts:
+                    if isinstance(p,list):
+                        if self._assert_validity_key( p[0] ):
+                            raise self._assert_validity_key( p[0] )
+                        output += p
+                    elif isinstance(p,tuple):
+                        splitted = p
+                        for spl in self.SPLITTERS[::-1]:
+                            if spl in p[0]:
+                                splitted = p[0].split(spl)
+                        for s in splitted:
+                            if s:
+                                output.append(s)
+        return output
+                
+                
+                
+                
+    # TODO: make method help_on_format, with explanation
+    def help_on_format(self, print_=True):
+        output = """
+        The first argument of Bind should be a string, that formats the
+        shortcut. This format must contain a KEY; all acceptable keys are
+        defined below. This KEY can be preceded by one or more MODIFIER.
+        If so, that the MODIFIER(s) and KEY have to be connected by
+        either a plus-sign (+) or minus-sign (-) (but be consequential).
+        KEYs and MODIFIERs can be encapsulated within quotes*.        
+        KEY and MODIFIER do not have to be case-sensitive.
+
+        Examples:
+        """
+        output = output[1:]
+        X,Y = 8,2
+        output += Y*" "+"Ctrl+P   alt+'+'   shift-\"B\"   'ctrl'-ShiFt-Z\n\n"+X*" "
+        
+        
+        output += "possible MODIFIER:\n%s%s"%((X+Y)*" ",(Y*" ").join(_MODIFIERS_NAMES))
+        output += "\n"*2+X*" "+"possible KEY:"
+        KEYS = _VALID_KEYS_NAMES.copy()
+        while KEYS:
+            line = "\n"+ X*" "
+            while KEYS and len(line) + len(KEYS[0]) <72:
+                line += Y*" " + KEYS[0]
+                KEYS.remove(KEYS[0])
+            output += line
+
+        output += \
+        """\n
+        *quotes cannot math the KEY, i.e. if KEY is single quote, the
+         quotes that encapsulate it must be double quotes."""
+        if print_:
+            print(output)
+        else:
+            return output
+        
+                
+            
 
 
 
     def _assert_validity_key(self,key_text):
         if not key_text.lower() in _VALID_KEYS_NAMES_lower:
-            error_message = "Input of key '%s' is not recognised"%(key_text)
+            error_message = "Input of key '%s' is not recognised. For help see method 'help_on_format'."%(key_text)
             return ValueError(error_message)
 
     def _assert_validity_modifier(self,list_modifiers):
         for modifier_text in list_modifiers:
-            if not modifier_text.lower() in MODIFIERS_NAMES_lower:
+            if not modifier_text.lower() in _MODIFIERS_NAMES_lower:
                 if modifier_text.lower() in _VALID_KEYS_NAMES_lower:
                     error_message = "The part '%s' from text-input '%s' is supposed to be the modifier."%\
                                     (modifier_text, self.text)
@@ -185,6 +264,11 @@ class Bind:
                     error_message = "The part '%s' from text-input '%s' was not recognised."%\
                                     (modifier_text, self.text)                
                     return ValueError(error_message)
+
+    def _assert_output(self,output):
+        if output.endswith("->>"):
+            error_message = "The input '%s' is invalid, since no modifier can be combined with '>'."%self.text
+            return ValueError(error_message)
 
 
     def _assert_function(self,function):
@@ -195,6 +279,9 @@ class Bind:
         # This function will be given to menu as a command (which accepts no
         # arguments) and to method tk.Tk.bind_all (which gives 1 argument).
         # Function has to handle both situations.
+        if not callable(function):
+            error_message = "Expected a function/callable, but got type %s."%type(function)
+            return TypeError(error_message)
         nr_of_args_given = [0,1]
 
         lower, upper = args_taken_by(function)
@@ -207,7 +294,9 @@ class Bind:
                 error_message = str(function) + " takes between %s and %s argument(s), while it has to accept between %s and %s number of arguments."%\
                                 (lower, upper, nr_of_args_given[0], nr_of_args_given[1])
             error_message += " (Suggestion; use the code lambda*x:foo(..) )"
-            return TypeError(error_message)
+            return ValueError(error_message)
+
+        
             
 
 def args_taken_by(function):
@@ -267,7 +356,8 @@ if __name__ == "__main__":
     Bind("Ctrl-P", lambda *y, z=1, **kwargs:print("vaas")).bind(master)
     Bind("Ctrl-Shift-P", lambda y=1,z=1:print("maas")).bind(master)
     Bind("shift-p",lambda*x:print("haas"), master = master)
-    Bind("+",lambda*x:print("raas"), master = master)
+    Bind("+",lambda*x:print("raas"), master = master).help_on_format()
+
 
     def foo(key):
         def bar(*args):
@@ -285,3 +375,8 @@ if __name__ == "__main__":
     master.bind_all("<Shift-Control-Tab>",lambda*x:print("ctrl-shft-tab"))
 ##    master.mainloop()
     master.destroy()
+
+    #### TEST ####
+    import unittest
+    from test.test_bind import Test_bind
+    unittest.main()
