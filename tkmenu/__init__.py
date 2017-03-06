@@ -15,6 +15,11 @@ Under MIT license
 import tkinter as tk
 import collections as col
 
+try:
+    from bind import Bind
+except:
+    from tkmenu.bind import Bind
+
 
 def isiterable(var):
     """Returns whether input is iterable or not."""
@@ -121,19 +126,21 @@ class Menu:
         submenu = []
         submenu_name = []
         submenu_dict = {}
+
+        self.items_to_be_bound = []
+        
         for menu_list in self._menu_lists:
                 current_submenu_name = None
 
                 if isinstance(menu_list, SubMenu):
                     menu_list = menu_list._menu_lists[0]
-                    # enables SubMenu's to be inserted as arguments as well...
+                    # enables SubMenu's to be inserted as arguments as well...                    
 
                 current_submenu, current_submenu_name = self._initiate_submenu(menu, menu_list[0])
-
                 
                 self._handles_dict[(current_submenu_name,)] = current_submenu
                 
-                for menu_item in menu_list[1:]:                        
+                for menu_item in menu_list[1:]:
                         
                         if isinstance(menu_item,str):
                             self._add_separator(current_submenu, menu_item)
@@ -142,7 +149,8 @@ class Menu:
                             menu_item.initialize(menu)
                             self._update_handles_dict_from_SubMenu( current_submenu_name, menu_item)
 
-                            current_submenu.add_cascade( menu_item.submenu_dict ) 
+                            current_submenu.add_cascade( menu_item.submenu_dict )
+                            self.items_to_be_bound += menu_item.items_to_be_bound
                             
                         elif isiterable(menu_item) and not isinstance(menu_item,str):
                             text = menu_item[0]
@@ -186,6 +194,7 @@ class Menu:
                 pass
         else:            
             tk.Tk.config(master, menu = menu)
+            self.bind_all_items(master)
 
         return self
             
@@ -244,6 +253,9 @@ class Menu:
         """
         dict_with_keywords = {}
         for elem in menu_item[1:]:
+            if isinstance(elem,Bind):
+                self.items_to_be_bound += [elem]
+                elem = elem.output_dict
             if callable(elem):
                 dict_with_keywords["command"] = elem
             elif isinstance(elem,dict):
@@ -481,6 +493,10 @@ class Menu:
         self._handles_dict = col.OrderedDict(sorted(self._handles_dict.items(), key = lambda x: self._index_path(x[0]) ))
 
 
+    def bind_all_items(self, master):
+        for bind_item in self.items_to_be_bound:
+            bind_item.bind(master)
+
     
     def _find_master_and_label(self, menu_list, path=None):
         """
@@ -537,6 +553,10 @@ class Menu:
                 raise LabelError(error_message)
             
         return master, label
+
+
+            
+            
 
 
 
