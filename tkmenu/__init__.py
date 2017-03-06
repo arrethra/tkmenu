@@ -21,6 +21,7 @@ except:
     from tkmenu.shortcut import ShortCut
 
 
+
 def isiterable(var):
     """Returns whether input is iterable or not."""
     try:
@@ -29,7 +30,6 @@ def isiterable(var):
     except TypeError:
         return False
     
-
 
 class Menu:
     """
@@ -577,6 +577,10 @@ class SubMenu(Menu):
     """    
     def __init__(self, menu_list):
         self._menu_lists = (menu_list,)
+
+class Shortcut(ShortCut):
+    pass
+    # this way, it shows up on help.
         
 
 class PathError(Exception):
@@ -589,8 +593,10 @@ class LabelError(Exception):
 
 
 if __name__ == "__main__":
+    help(__name__)
     ####### TEST #######
     from test.test_tkmenu import Test_tkmenu
+    from test.test_shortcut import Test_Shortcut
     import unittest
     unittest.main()
 

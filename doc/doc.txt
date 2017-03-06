@@ -69,7 +69,7 @@ class SubMenu
                       submenu.
 
    
-Methods (for both classes): 
+Methods (for both classes Menu and SubMenu): 
 
     initialize(self, master)
         Initializes this class further. Normally for private use only.
@@ -126,3 +126,53 @@ Methods (for both classes):
          'recent files', which can change in size.
         **For just changing labels or other simple options,
          see method entryconfig from tk.Menu
+
+Class ShortCut / Shortcut
+    This class is designed to make it easy to create shortcuts from
+    menu-items. Preferably used in harmony with Menu. When used in Menu,
+    just add it to the list of that menu-item; for an example, see
+    example 4 in the relevant folder.
+    
+    
+    Arguments:
+    -text:        The string that defines the shortcut. The format for
+                  this argument has some requirements. Call the
+                  method help_on_format for more information. 
+    -function:    Function that is to be performed when the shortcut is
+                  called. The function has to be able to accept both
+                  0 arguments or 1 argument.
+    -keepformat:  text might be reformatted when format is added to
+                  menu-item. Setting keepformat to True keeps the
+                  format from text. Setting keepformat to a string,
+                  will supersede the format from text.
+    -master:      In order to bind the shortcuts to the function,
+                  this class needs a master. If no master is supplied
+                  initially, the shortcut still needs to be 'bound'
+                  with the method bind (which requires a master)
+                  When using this class in harmony with Menu or SubMenu,
+                  it takes the master from Menu.
+    -add:         If add is specified to be true, the function will be
+                  added to the shortcut.
+    
+    Atttributes:
+    -output_dict: A dictionary that can be accepted by a tk.Menu method
+                  such as add_command. Dictionary specifies the
+                  keyword-arguments "accelerator" and "command"
+    -output:      event-binder for the keystrokes, that can be accepted
+                  into method tk.Tk.bind_all.
+    -master:      contains the master
+    -text_formatted:
+                  Text/format that will be displayed in the menu.
+
+Methods:          
+    bind(self, master=None, add=None)
+        Binds the shortcut to the function. If no master is specified
+        during initalization, this method needs to be called manually.
+    
+    help_on_format(self, print_=True)
+        Prints 'help' on how to properly format the argument 'text'.
+        This method also returns this help-text. To prevent printing,
+        specifiy argument 'print_' to be False.
+   
+    unbind(self)
+        Unbinds the function from the shortcut.
