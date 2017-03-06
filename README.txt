@@ -5,7 +5,7 @@
 
 ## tkmenu also allows easy updating/generation of submenus when they
 ## are required to change, even during runtime of the script/program.
-## An example is shown in Example 3 (from map examples), where the 
+## An example is shown in Example 3 (from folder examples), where the 
 ## submenu 'recent files' can change according to history of file use.         
  
 

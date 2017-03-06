@@ -123,7 +123,11 @@ class Menu:
         submenu_dict = {}
         for menu_list in self._menu_lists:
                 current_submenu_name = None
-                 
+
+                if isinstance(menu_list, SubMenu):
+                    menu_list = menu_list._menu_lists[0]
+                    # enables SubMenu's to be inserted as arguments as well...
+
                 current_submenu, current_submenu_name = self._initiate_submenu(menu, menu_list[0])
 
                 
@@ -355,7 +359,6 @@ class Menu:
                 return PathError(error_message)
 
 
-    # TODO: what is the error when there is a typo is input-label??
     def reconfigure_submenu(self, menu_list, path=None):
         """
         Updates/converts a submenu* to the submenu as defined by
@@ -535,8 +538,6 @@ class Menu:
             
         return master, label
 
-# TODO: let Menu also accept SubMenu ..??
-# TODO let Submenu accept multiple arguments
 
 
 
@@ -563,6 +564,8 @@ class PathError(Exception):
     
 class LabelError(Exception):
     pass
+
+# TODO: make function Bind, that returns the dict  {"accelerator":"keys","command""function} but also automatically binds the function from that menu to that shortcut...
 
 
 
