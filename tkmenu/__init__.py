@@ -16,9 +16,9 @@ import tkinter as tk
 import collections as col
 
 try:
-    from bind import Bind
+    from shortcut import ShortCut
 except:
-    from tkmenu.bind import Bind
+    from tkmenu.shortcut import ShortCut
 
 
 def isiterable(var):
@@ -127,7 +127,7 @@ class Menu:
         submenu_name = []
         submenu_dict = {}
 
-        self.items_to_be_bound = []
+        self.shortcuts = []
         
         for menu_list in self._menu_lists:
                 current_submenu_name = None
@@ -150,7 +150,7 @@ class Menu:
                             self._update_handles_dict_from_SubMenu( current_submenu_name, menu_item)
 
                             current_submenu.add_cascade( menu_item.submenu_dict )
-                            self.items_to_be_bound += menu_item.items_to_be_bound
+                            self.shortcuts += menu_item.shortcuts
                             
                         elif isiterable(menu_item) and not isinstance(menu_item,str):
                             text = menu_item[0]
@@ -253,8 +253,8 @@ class Menu:
         """
         dict_with_keywords = {}
         for elem in menu_item[1:]:
-            if isinstance(elem,Bind):
-                self.items_to_be_bound += [elem]
+            if isinstance(elem,ShortCut):
+                self.shortcuts += [elem]
                 elem = elem.output_dict
             if callable(elem):
                 dict_with_keywords["command"] = elem
@@ -494,7 +494,7 @@ class Menu:
 
 
     def bind_all_items(self, master):
-        for bind_item in self.items_to_be_bound:
+        for bind_item in self.shortcuts:
             bind_item.bind(master)
 
     
@@ -585,7 +585,6 @@ class PathError(Exception):
 class LabelError(Exception):
     pass
 
-# TODO: make function Bind, that returns the dict  {"accelerator":"keys","command""function} but also automatically binds the function from that menu to that shortcut...
 
 
 

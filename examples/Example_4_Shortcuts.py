@@ -7,7 +7,7 @@ if parent_folder not in sys.path:
 del sys, os, inspect, current_folder, parent_folder
 
 import tkinter as tk
-from tkmenu import Menu, SubMenu, Bind
+from tkmenu import Menu, SubMenu, ShortCut
 
 
 ###### EXAMPLE ######
@@ -21,14 +21,14 @@ def PrintFile(*x):
     print("print file")
 
 filemenu = ["file"
-               ,["save",  Bind("Ctrl+S", SaveFile )]
-               ,["print", Bind("ctrl-p", PrintFile)]
+               ,["save",  ShortCut("Ctrl+S", SaveFile )]
+               ,["print", ShortCut("ctrl-p", PrintFile)]
                ,["___"]
                ,["quit", master.destroy]
            ]
 
 editmenu = ["edit"
-               ,["undo",  Bind("Ctrl+Z", Undo)]
+               ,["undo",  ShortCut("Ctrl+Z", Undo)]
            ]
             
 A = Menu(master, filemenu, editmenu)

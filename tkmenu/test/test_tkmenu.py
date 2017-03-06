@@ -7,7 +7,7 @@ import tkinter as tk
 TIME = 1
 
 try:
-    from tkmenu import Menu, SubMenu, LabelError, PathError, Bind
+    from tkmenu import Menu, SubMenu, LabelError, PathError, ShortCut
 except:
     # This garbage just so to import 'tkmenu', if it can't be done via the main way.
     import sys
@@ -18,7 +18,7 @@ except:
         sys.path.insert(0, grandparent_folder)
     del sys
     del current_folder, parent_folder, grandparent_folder
-    from tkmenu import Menu, SubMenu, LabelError, PathError, Bind
+    from tkmenu import Menu, SubMenu, LabelError, PathError, ShortCut
 
 # TODO: now you're testing with static examples, but use an example with an automatic iterator... ?
 
@@ -166,14 +166,14 @@ def assert_menu2(self):
 def initialize_menu_with_shortcuts(self):
     self.master = tk.Tk()
     filemenu = ["file"
-                   ,["save",  Bind("Ctrl+S", lambda*x:print("save") )]
-                   ,["print", Bind("ctrl-p", lambda*x:print("print"))]
+                   ,["save",  ShortCut("Ctrl+S", lambda*x:print("save") )]
+                   ,["print", ShortCut("ctrl-p", lambda*x:print("print"))]
                    ,["___"]
                    ,["quit", self.master.destroy]
                ]
 
     editmenu = ["edit"
-                   ,["undo",  Bind("Ctrl+Z", lambda*x:print("undo"))]
+                   ,["undo",  ShortCut("Ctrl+Z", lambda*x:print("undo"))]
                ]
             
     A = Menu(self.master, filemenu, editmenu)
