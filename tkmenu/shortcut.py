@@ -85,10 +85,12 @@ class ShortCut:
                   this class needs a master. If no master is supplied
                   initially, the shortcut still needs to be 'bound'
                   with the method bind (which requires a master)
-                  When using this class in harmony with Menu or SubMenu,
-                  it takes the master from Menu.
-    -add:         If add is specified to be true, the function will be
-                  added to the shortcut.
+                  When using this class in harmony with Menu, it takes
+                  the master from Menu.
+    -add:         If set to True, it enables multiple function to be
+                  added to this specific shortcut. Adding another
+                  function to the shortcut is enabled by using ShortCut
+                  or method tk.Tk.bind_all again (with keyword add=True)
 
     Atttributes:
     -output_dict: A dictionary that can be accepted by a tk.Menu method
@@ -105,7 +107,6 @@ class ShortCut:
     SPLITTERS = "+-"
     QUOTATIONS = "\'\""
     def __init__(self, text, function, keepformat=False, master = None, add=None):       
-
         if self._assert_function(function):
             raise self._assert_function(function)
         self.function = function        
@@ -150,7 +151,7 @@ class ShortCut:
         if master:
             self.bind(master, add)
 
-    # TODO: make function to unbind....
+
 
 
     def _form_output_without_modifier(self,text):
@@ -207,7 +208,7 @@ class ShortCut:
     def unbind(self):
         """
         Unbinds the function from the shortcut.
-        TODO test"""
+        """
         self.master.unbind_all(self.output)
         
         
@@ -405,37 +406,6 @@ def args_taken_by(function):
     
 
 if __name__ == "__main__":
-
-##    master = tk.Tk()
-##
-##    master.after(1000,master.destroy)
-##
-##    
-##    ShortCut("p",      lambda*x,y=1:print("kaas")).bind(master)
-##    ShortCut("Ctrl-P", lambda *y, z=1, **kwargs:print("vaas")).bind(master)
-##    ShortCut("Ctrl-Shift-P", lambda y=1,z=1:print("maas")).bind(master)
-##    ShortCut("shift-p",lambda*x:print("haas"), master = master)
-##
-##
-##    def foo(key):
-##        def bar(*args):
-##            print(key)
-##        return key, bar
-##    
-##    for key in _VALID_KEYS:
-##        try:
-##            master.bind_all( *foo(key)  )
-##        except:
-##            print("error occurred with",key)
-##            raise
-##    
-##    master.bind_all("<Control-Tab>",lambda*x:print("ctrl-tab"))
-##    master.bind_all("<Shift-Control-Tab>",lambda*x:print("ctrl-shft-tab"))
-####    master.mainloop()
-##    master.destroy()
-
-    help(__name__)
-
     #### TEST ####
     import unittest
     from test.test_shortcut import Test_Shortcut

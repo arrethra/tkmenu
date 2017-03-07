@@ -151,8 +151,10 @@ Class ShortCut / Shortcut
                   with the method bind (which requires a master)
                   When using this class in harmony with Menu or SubMenu,
                   it takes the master from Menu.
-    -add:         If add is specified to be true, the function will be
-                  added to the shortcut.
+    -add:         If set to True, it enables multiple function to be
+                  added to this specific shortcut. Adding another
+                  function to the shortcut is enabled by using ShortCut
+                  or method tk.Tk.bind_all again (with keyword add=True)
     
     Atttributes:
     -output_dict: A dictionary that can be accepted by a tk.Menu method

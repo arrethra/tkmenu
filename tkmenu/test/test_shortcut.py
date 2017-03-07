@@ -111,6 +111,38 @@ class Test_Shortcut(unittest.TestCase):
         with self.assertRaises(TypeError):
             A = ShortCut(">",2) # must be a function, not anything else
             A.bind(self.master)
+
+    def test_argument_keepformat(self):
+        # if keepformat is not specified, input-text will be reformatted
+        # into standard format for presentation on menu-item
+        A = ShortCut("Ctrl+'P'",stupid_function)
+        A.bind(self.master)
+        self.assertTrue(A.output_dict["accelerator"] == "Ctrl+P")
+        
+        A = ShortCut("Ctrl-'P'",stupid_function)
+        A.bind(self.master)
+        self.assertTrue(A.output_dict["accelerator"] == "Ctrl+P")
+
+        A = ShortCut("ctrl-p",stupid_function)
+        A.bind(self.master)
+        self.assertTrue(A.output_dict["accelerator"] == "Ctrl+P")
+        
+        # if keepformat is set to True, input-text will NOT be reformatted
+        # into standard format for presentation on menu-item
+        A = ShortCut("ctrl-p",stupid_function, keepformat=True)
+        A.bind(self.master)
+        self.assertTrue(A.output_dict["accelerator"] == "ctrl-p")
+
+        # if keepformat is a string, it will supersede the input-text for
+        # presentation on menu-item
+        A = ShortCut("ctrl-p",stupid_function, keepformat="something else")
+        A.bind(self.master)
+        self.assertTrue(A.output_dict["accelerator"] == "something else")        
+
+
+# TODO: test with simulating keydown to really test the shortcut...
+    # test shortcuts / test unbind...
+    # http://stackoverflow.com/questions/11906925/python-simulate-keydown
         
             
 
