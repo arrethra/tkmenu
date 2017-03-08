@@ -15,6 +15,12 @@ Under MIT license
 import tkinter as tk
 import collections as col
 
+try:
+    from shortcut import ShortCut
+except:
+    from tkmenu.shortcut import ShortCut
+
+
 
 def isiterable(var):
     """Returns whether input is iterable or not."""
@@ -24,7 +30,6 @@ def isiterable(var):
     except TypeError:
         return False
     
-
 
 class Menu:
     """
@@ -121,15 +126,21 @@ class Menu:
         submenu = []
         submenu_name = []
         submenu_dict = {}
+
+        self.shortcuts = []
+        
         for menu_list in self._menu_lists:
                 current_submenu_name = None
-                 
-                current_submenu, current_submenu_name = self._initiate_submenu(menu, menu_list[0])
 
+                if isinstance(menu_list, SubMenu):
+                    menu_list = menu_list._menu_lists[0]
+                    # enables SubMenu's to be inserted as arguments as well...                    
+
+                current_submenu, current_submenu_name = self._initiate_submenu(menu, menu_list[0])
                 
                 self._handles_dict[(current_submenu_name,)] = current_submenu
                 
-                for menu_item in menu_list[1:]:                        
+                for menu_item in menu_list[1:]:
                         
                         if isinstance(menu_item,str):
                             self._add_separator(current_submenu, menu_item)
@@ -138,7 +149,8 @@ class Menu:
                             menu_item.initialize(menu)
                             self._update_handles_dict_from_SubMenu( current_submenu_name, menu_item)
 
-                            current_submenu.add_cascade( menu_item.submenu_dict ) 
+                            current_submenu.add_cascade( menu_item.submenu_dict )
+                            self.shortcuts += menu_item.shortcuts
                             
                         elif isiterable(menu_item) and not isinstance(menu_item,str):
                             text = menu_item[0]
@@ -182,6 +194,7 @@ class Menu:
                 pass
         else:            
             tk.Tk.config(master, menu = menu)
+            self.bind_all_items(master)
 
         return self
             
@@ -240,6 +253,9 @@ class Menu:
         """
         dict_with_keywords = {}
         for elem in menu_item[1:]:
+            if isinstance(elem,ShortCut):
+                self.shortcuts += [elem]
+                elem = elem.output_dict
             if callable(elem):
                 dict_with_keywords["command"] = elem
             elif isinstance(elem,dict):
@@ -355,7 +371,6 @@ class Menu:
                 return PathError(error_message)
 
 
-    # TODO: what is the error when there is a typo is input-label??
     def reconfigure_submenu(self, menu_list, path=None):
         """
         Updates/converts a submenu* to the submenu as defined by
@@ -478,6 +493,10 @@ class Menu:
         self._handles_dict = col.OrderedDict(sorted(self._handles_dict.items(), key = lambda x: self._index_path(x[0]) ))
 
 
+    def bind_all_items(self, master):
+        for bind_item in self.shortcuts:
+            bind_item.bind(master)
+
     
     def _find_master_and_label(self, menu_list, path=None):
         """
@@ -535,8 +554,10 @@ class Menu:
             
         return master, label
 
-# TODO: let Menu also accept SubMenu ..??
-# TODO let Submenu accept multiple arguments
+
+            
+            
+
 
 
 
@@ -556,6 +577,10 @@ class SubMenu(Menu):
     """    
     def __init__(self, menu_list):
         self._menu_lists = (menu_list,)
+
+class Shortcut(ShortCut):
+    pass
+    # this way, it shows up on help.
         
 
 class PathError(Exception):
@@ -566,9 +591,12 @@ class LabelError(Exception):
 
 
 
+
 if __name__ == "__main__":
+    help(__name__)
     ####### TEST #######
     from test.test_tkmenu import Test_tkmenu
+    from test.test_shortcut import Test_Shortcut
     import unittest
     unittest.main()
 

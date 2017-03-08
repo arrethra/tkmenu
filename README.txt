@@ -5,8 +5,12 @@
 
 ## tkmenu also allows easy updating/generation of submenus when they
 ## are required to change, even during runtime of the script/program.
-## An example is shown in Example 3 (from map examples), where the 
-## submenu 'recent files' can change according to history of file use.         
+## An example is shown in Example 3 (from folder examples), where the 
+## submenu 'recent files' can change according to history of file use. 
+
+## This module also offers the possibility to easily create shortcuts
+## to menu-items with the class ShortCut. For an example, see 
+## example 4 in the relevant folder. 
  
 
 ###### EXAMPLE 1 ######

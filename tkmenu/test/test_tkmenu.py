@@ -7,7 +7,7 @@ import tkinter as tk
 TIME = 1
 
 try:
-    from tkmenu import Menu, SubMenu, LabelError, PathError
+    from tkmenu import Menu, SubMenu, LabelError, PathError, ShortCut
 except:
     # This garbage just so to import 'tkmenu', if it can't be done via the main way.
     import sys
@@ -18,7 +18,7 @@ except:
         sys.path.insert(0, grandparent_folder)
     del sys
     del current_folder, parent_folder, grandparent_folder
-    from tkmenu import Menu, SubMenu, LabelError, PathError
+    from tkmenu import Menu, SubMenu, LabelError, PathError, ShortCut
 
 # TODO: now you're testing with static examples, but use an example with an automatic iterator... ?
 
@@ -162,6 +162,23 @@ def assert_menu2(self):
     
     self.assertTrue(self.menubar.get_handle("one choice only").type(0) == "radiobutton")
     self.assertTrue(self.menubar.get_handle("one choice only").type(1) == "radiobutton")
+
+def initialize_menu_with_shortcuts(self):
+    self.master = tk.Tk()
+    filemenu = ["file"
+                   ,["save",  ShortCut("Ctrl+S", lambda*x:print("save") )]
+                   ,["print", ShortCut("ctrl-p", lambda*x:print("print"))]
+                   ,["___"]
+                   ,["quit", self.master.destroy]
+               ]
+
+    editmenu = ["edit"
+                   ,["undo",  ShortCut("Ctrl+Z", lambda*x:print("undo"))]
+               ]
+            
+    A = Menu(self.master, filemenu, editmenu)
+    return A
+    
 
 def assert_submenu2(self):
     assert_submenu1(self)      
@@ -340,6 +357,9 @@ class Test_tkmenu(unittest.TestCase):
                                             ,('file', 'milkproducts', 'cheese')
                                             ,('file', 'vegetables')                                   
                                            ) )
+
+    def test_menu_with_shortcuts(self):
+        self.menubar = initialize_menu_with_shortcuts(self)
         
 
 
