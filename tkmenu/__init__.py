@@ -24,7 +24,7 @@ del sys, os, inspect, current_folder
 try:
     from tkmenu.shortcut import ShortCut
 except:
-    shortcut import ShortCut
+    from shortcut import ShortCut
 
 
 
