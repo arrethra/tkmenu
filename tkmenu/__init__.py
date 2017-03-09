@@ -14,11 +14,17 @@ Under MIT license
 
 import tkinter as tk
 import collections as col
+import sys,os,inspect
+
+current_folder = os.path.realpath(os.path.abspath(os.path.split(inspect.getfile( inspect.currentframe() ))[0]))
+if current_folder not in sys.path:
+    sys.path.insert(0, current_folder)
+del sys, os, inspect, current_folder
 
 try:
-    from shortcut import ShortCut
-except:
     from tkmenu.shortcut import ShortCut
+except:
+    shortcut import ShortCut
 
 
 
@@ -593,7 +599,6 @@ class LabelError(Exception):
 
 
 if __name__ == "__main__":
-    help(__name__)
     ####### TEST #######
     from test.test_tkmenu import Test_tkmenu
     from test.test_shortcut import Test_Shortcut
