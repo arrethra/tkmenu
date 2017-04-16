@@ -16,6 +16,9 @@ import tkinter as tk
 import collections as col
 import sys,os,inspect
 
+from tkinter import _tkinter
+
+
 current_folder = os.path.realpath(os.path.abspath(os.path.split(inspect.getfile( inspect.currentframe() ))[0]))
 if current_folder not in sys.path:
     sys.path.insert(0, current_folder)
@@ -123,7 +126,7 @@ class Menu:
            SubMenu is entered into Menu, as can be seen in the example
            of the Menu doc-string )
 
-"""
+         """
         menu = tk.Menu(master)       
 
         self._handles_dict = col.OrderedDict()
@@ -154,8 +157,11 @@ class Menu:
                         elif isinstance(menu_item, SubMenu): 
                             menu_item.initialize(menu)
                             self._update_handles_dict_from_SubMenu( current_submenu_name, menu_item)
-
-                            current_submenu.add_cascade( menu_item.submenu_dict )
+                            current_submenu.add_cascade( )
+                            for key in menu_item.submenu_dict:
+                                current_submenu.entryconfig(current_submenu.index('end'),
+                                                            {key:menu_item.submenu_dict[key]})
+                            
                             self.shortcuts += menu_item.shortcuts
                             
                         elif isiterable(menu_item) and not isinstance(menu_item,str):
@@ -225,11 +231,20 @@ class Menu:
         if not isinstance(current_submenu_name,str):
             error_message = "Submenu name (first item in iterable) must be a string, but found type %s."%type(current_submenu_name)
             raise TypeError(error_message)
-                
-        current_submenu = tk.Menu(menu,dict_with_keywords)
+
+        dict_with_keywords_copy = dict_with_keywords.copy()
+
+        current_submenu = tk.Menu(menu)
+        
+        for key in dict_with_keywords.copy():
+            try:
+                current_submenu.config({key:dict_with_keywords[key]})
+                del dict_with_keywords_copy[key]
+            except _tkinter.TclError:
+                del dict_with_keywords[key]
         
         if isinstance(self, SubMenu):
-            self.submenu_dict = dict_with_keywords.copy()
+            self.submenu_dict = dict_with_keywords_copy
 
         return (current_submenu, current_submenu_name)
 
@@ -368,10 +383,13 @@ class Menu:
                 possible_keys = [a[len(lesser_path):] for a in _handles_dict_keys if a[0:len(lesser_path)] == lesser_path] # must start with lesser_path, and also removes it
                 
                 possible_keys = [a for a in possible_keys if len(a)==1] # remove any paths after base path
+                possible_keys = [a[0] if isinstance(a,tuple) else a for a in possible_keys ]
                 
                 if len(possible_keys):
-
-                    error_message = "Argument #%s '%s' unrecognised. Correct argument at that place could have been '%s'."%(i+1,path_partial,"', '".join(possible_keys))
+                    all_possible_keys = "', '".join(possible_keys)
+                    error_message = "Argument #%s '%s' unrecognised. "%(i+1,path_partial) +\
+                                    "Correct argument at that place could have been '%s'."\
+                                                                       %(all_possible_keys)
                 else:
                     error_message = "Argument #%s '%s' unrecognised. There is no such path possible with that Argument."%(i+1,path_partial)
                 return PathError(error_message)
@@ -586,7 +604,8 @@ class SubMenu(Menu):
 
 class Shortcut(ShortCut):
     pass
-    # this way, it shows up on help.
+    # This way, when calling help on the module, the documentation of ShortCut
+    # is still visible...
         
 
 class PathError(Exception):

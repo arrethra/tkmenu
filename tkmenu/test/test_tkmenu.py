@@ -181,8 +181,9 @@ def initialize_menu_with_shortcuts(self):
     
 
 def assert_submenu2(self):
-    assert_submenu1(self)      
-    self.assertTrue(str(self.menubar.get_handle("file","milkproducts").entrycget(1,'foreground')) == "red")
+    assert_submenu1(self)
+    self.assertTrue(str(self.menubar.get_handle("file","milkproducts","cheese").cget('foreground')) == "red")
+    
     
 
 class RecentFilesClass():
